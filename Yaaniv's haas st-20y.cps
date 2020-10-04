@@ -245,7 +245,8 @@ var machineState = {
   tapping: undefined,
   currentBAxisOrientationTurning: new Vector(0, 0, 0),
   feedPerRevolution: undefined,
-  stockTransferIsActive: false
+  stockTransferIsActive: false,
+  chipConveyorIsActive: undefined
 };
 
 /** G/M codes setup */
@@ -355,8 +356,10 @@ function getCode(code) {
     machineState.spindleSynchronizationIsActive = false;
     return gSynchronizedSpindleModal.format(198);
   case "START_CHIP_TRANSPORT":
+    machineState.chipConveyorIsActive=true;
     return mFormat.format(31);
   case "STOP_CHIP_TRANSPORT":
+    machineState.chipConveyorIsActive=false;
     return mFormat.format(33);
   case "OPEN_DOOR":
     return mFormat.format(85);
@@ -928,6 +931,7 @@ function onOpen() {
 
   if (properties.gotChipConveyor) {
     onCommand(COMMAND_START_CHIP_TRANSPORT);
+  
   }
 
   if (gotYAxis) {
@@ -3647,7 +3651,13 @@ function onCommand(command) {
       forceSpindleSpeed = true;
       currentCoolantMode = undefined;
     }
+    if(properties.gotChipConveyor){
+      writeBlock(getCode("STOP_CHIP_TRANSPORT"));
+    }
     writeBlock(mFormat.format(0));
+    if(properties.gotChipConveyor){
+    writeBlock(getCode("START_CHIP_TRANSPORT"));
+  }
     break;
   case COMMAND_OPTIONAL_STOP:
     if (!skipBlock) {
@@ -3655,6 +3665,9 @@ function onCommand(command) {
       currentCoolantMode = undefined;
     }
     writeBlock(mFormat.format(1));
+    if(properties.gotChipConveyor){
+      writeBlock(getCode("START_CHIP_TRANSPORT"));
+    }
     break;
   case COMMAND_END:
     writeBlock(mFormat.format(2));
