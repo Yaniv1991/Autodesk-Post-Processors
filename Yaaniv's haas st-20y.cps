@@ -450,6 +450,7 @@ function startSpindle(forceRPMMode, initialPosition, rpm) {
   case SPINDLE_PRIMARY: // main spindle
     if (machineState.isTurningOperation || machineState.axialCenterDrilling) { // turning main spindle
       skipBlock = _skipBlock;
+      writeBlock(getCode("MAIN_SPINDLE_BRAKE_OFF"));
       writeBlock(
         sOutput.format(_spindleSpeed),
         conditional(!machineState.tapping, tool.clockwise ? getCode("START_MAIN_SPINDLE_CW") : getCode("START_MAIN_SPINDLE_CCW"))
@@ -2055,6 +2056,7 @@ function updateMachiningMode(section) {
   }
 
   if (machineState.axialCenterDrilling) {
+    writeBlock(getCode("MAIN_SPINDLE_BRAKE_OFF"));
     cOutput.disable();
   } else {
     cOutput.enable();
@@ -3602,8 +3604,10 @@ function onCommand(command) {
   case COMMAND_START_SPINDLE:
     if (machineState.isTurningOperation || machineState.axialCenterDrilling) {
       if (currentSection.spindle == SPINDLE_PRIMARY) {
+        writeBlock(getCode("MAIN_SPINDLE_BRAKE_OFF"));
         writeBlock(tool.clockwise ? getCode("START_MAIN_SPINDLE_CW") : getCode("START_MAIN_SPINDLE_CCW"));
       } else {
+        getCode("SUB_SPINDLE_BRAKE_OFF");
         writeBlock(tool.clockwise ? getCode("START_SUB_SPINDLE_CW") : getCode("START_SUB_SPINDLE_CCW"));
       }
     } else {
